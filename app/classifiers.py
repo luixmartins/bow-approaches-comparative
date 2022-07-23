@@ -4,8 +4,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
-from sklearn.metrics import f1_score
-from sklearn.metrics import classification_report
 from sklearn.model_selection import cross_val_score
 from scipy.spatial.distance import cosine
 
