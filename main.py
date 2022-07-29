@@ -11,7 +11,7 @@ import string
 import spacy 
 #TEXTUAL REPRESENTATIONS 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from bertVectorizer import bertVectorizer as td_bert 
+from bertVectorizer import bertVectorizer 
 from sentence_transformers import SentenceTransformer
 #CLASSIFIERS 
 from sklearn.neighbors import KNeighborsClassifier
@@ -83,15 +83,17 @@ class Pipeline:
 
     def textual_representations(self):
         representations = {
-            'TF': CountVectorizer(stop_words=self.STOPWORDS),
-            'TF-IDF': TfidfVectorizer(stop_words=self.STOPWORDS),
+            'TF': CountVectorizer(stop_words=self.STOPWORDS, ngram_range=(2,2)),
+            'TF-IDF': TfidfVectorizer(stop_words=self.STOPWORDS, ngram_range=(2,2)),
+            'Bert-Base'     : 'bert-base-multilingual-cased',
+            'Distilbert'    : 'distilbert-base-multilingual-cased',
+            'TD-Bert'       : bertVectorizer(bert_model = 'bert-base-multilingual-cased', ngrams=2),
+            'TD-Distilbert' : bertVectorizer(bert_model = 'distilbert-base-multilingual-cased', ngrams=2)
         }
 
         return representations 
 
     def main(self):
-        '''
-        '''
         X_col = 'text'
         y_col = 'label'
         kfold = 10
@@ -124,21 +126,27 @@ class Pipeline:
                     accuracies = cross_val_score(model, X, y, scoring='accuracy', cv=kfold)
                     
                     for fold_index, accuracy in enumerate(accuracies):
-                        entries.append((model_name, fold_index, accuracy, name))
+                        entries.append((model_name, fold_index, accuracy))
             
                 except:
                     print("Error in:", name, model_name)
 
-        cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_index', 'accuracy', 'name'])
-        mean = cv_df.groupby(['model_name', 'name']).accuracy.mean()
-        std = cv_df.groupby(['model_name', 'name']).accuracy.std()
+        cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_index', 'accuracy'])
+        mean = cv_df.groupby(['model_name']).accuracy.mean()
+        std = cv_df.groupby(['model_name']).accuracy.std()
 
         result_cv = pd.concat([mean, std], axis=1, ignore_index=True)
         result_cv.columns = ['Mean Accuracy', 'Standard Deviation']
 
+        print(result_cv)
+
+        #ALTERAR LOCAL PARA SALVAR 
+        result_cv.to_csv(f'{name}_kfold10.csv')
+
         return result_cv 
 
 if __name__ == '__main__':
+    #CAMINHO DO DATASET 
     path = 'datasets/sentiment_analyze_data.csv'
 
     pipeline = Pipeline(path).main() 
